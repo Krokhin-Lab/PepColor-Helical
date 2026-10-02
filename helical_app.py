@@ -15,7 +15,7 @@ from pathlib import Path
 import streamlit as st
 
 from helical_core import (
-    GROUPS, MAX_LENGTH, MAX_PEPTIDES, OUTPUTS,
+    GROUPS, MAX_LENGTH, MAX_PEPTIDES, OUTPUTS, grid_shape,
     png_bytes, prepare_inputs, read_csv_entries, save_grid, zip_bytes,
 )
 
@@ -30,7 +30,7 @@ def cached_zip(peptides: tuple, selected: tuple) -> bytes:
 @st.cache_data(show_spinner=False)
 def cached_preview(peptides: tuple) -> bytes:
     # lower resolution for the page; downloads are 200 dpi
-    return png_bytes(save_grid, list(peptides), legend=True, dpi=100)
+    return png_bytes(save_grid, list(peptides), dpi=100)
 
 
 def shape_svg(shape: str | None, color: str) -> str:
@@ -128,8 +128,9 @@ for col, (key, label) in zip(st.columns(len(OUTPUTS)), OUTPUTS.items()):
     with col:
         if st.checkbox(label, value=(key == "matrix"), key=key):
             selected.add(key)
-st.caption("“Bare” figures have no legend. Figures carry no sequence labels; the zip "
-           "includes peptides.txt listing the order (matrix reads left to right).")
+st.caption("Individuals and Matrix show each sequence above its wheel and the legend "
+           "underneath. “Bare” figures are the wheels only, for publication; the zip includes "
+           "peptides.txt listing the order (matrix reads left to right).")
 
 if peptides:
     if selected:
@@ -147,9 +148,9 @@ if peptides:
 
     # --- Preview: always the matrix with legend ---
     st.subheader("Preview")
-    st.caption("Peptides in order, left to right: " +
-               " · ".join(f"{k}. {p}" for k, p in enumerate(peptides, 1)))
-    st.image(cached_preview(tuple(peptides)), width="stretch")
+    # about 220 px per column so the preview is not blown up to the full page width
+    _, cols = grid_shape(len(peptides))
+    st.image(cached_preview(tuple(peptides)), width=min(880, 220 * cols))
 
 # --- Footer ---
 st.divider()

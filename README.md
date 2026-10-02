@@ -17,15 +17,15 @@ Upload a CSV with peptide sequences in the first column, or type them in (one pe
 
 | Output | File(s) in the zip |
 |---|---|
-| **Individuals** | `individuals/01_<sequence>.png`, … one wheel per peptide, with legend |
-| **Matrix** | `matrix.png`, all wheels in one figure, with legend |
-| **Individuals - bare** | `individuals_bare/…`, one wheel per peptide, no legend |
-| **Matrix - bare** | `matrix_bare.png`, all wheels, no legend |
+| **Individuals** | `individuals/01_<sequence>.png`, … one wheel per peptide, with its sequence and the legend |
+| **Matrix** | `matrix.png`, all wheels in one figure, each with its sequence, plus the legend |
+| **Individuals - bare** | `individuals_bare/…`, one wheel per peptide, wheel only |
+| **Matrix - bare** | `matrix_bare.png`, all wheels, wheels only |
 | **Separate Legend** | `legend.png` |
 
-Every zip also contains `peptides.txt`, listing the peptides in order. The figures carry no sequence labels (for publication), and the matrix reads left to right, top to bottom. The matrix uses 3 columns for up to 9 peptides and 4 columns for 10–16. Figures are 200 dpi PNG on a white background.
+Every zip also contains `peptides.txt`, listing the peptides in order. Individuals and Matrix show each sequence above its wheel with the legend underneath; the "bare" versions are the wheels only, for publication. The matrix reads left to right, top to bottom. The matrix uses 3 columns for up to 9 peptides and 4 columns for 10–16. Figures are 200 dpi PNG on a white background.
 
-The app preview always shows the matrix with legend.
+The app preview always shows the Matrix (sequences and legend).
 
 ## How the wheel is drawn
 

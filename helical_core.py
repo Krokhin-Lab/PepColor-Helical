@@ -171,7 +171,7 @@ def wheel_extent(n: int) -> float:
 
 
 def draw_wheel(ax, residues: list[str], extent: float | None = None):
-    """Draw one helical wheel. No title, so figures are ready for publication."""
+    """Draw one helical wheel (no title; callers add the sequence when wanted)."""
     n = len(residues)
     rings = max(1, math.ceil(n / PER_RING))
     pts = [_position(i) for i in range(n)]
@@ -246,17 +246,26 @@ def save_legend(out, dpi=DPI):
 
 
 # =============================================================== figures
-def save_individual(peptide: str, out, legend=True, dpi=DPI):
-    """One wheel, optionally with the legend underneath."""
+TITLE_H = 0.45      # inches reserved above each wheel for its sequence
+
+
+def _title(ax, peptide):
+    ax.set_title(peptide, fontsize=12, fontfamily="monospace", pad=2)
+
+
+def save_individual(peptide: str, out, bare=False, dpi=DPI):
+    """One wheel. Default: sequence on top and legend underneath. bare: the wheel only."""
     res = parse_sequence(peptide)
     rings = max(1, math.ceil(len(res) / PER_RING))
     side = 5.0 + 1.8 * (rings - 1)
-    leg_h = 0.9 if legend else 0.0
-    fig, ax = plt.subplots(figsize=(side, side + leg_h))
+    t_h = 0.0 if bare else TITLE_H
+    leg_h = 0.0 if bare else 0.9
+    height = side + t_h + leg_h
+    fig, ax = plt.subplots(figsize=(side, height))
     draw_wheel(ax, res)
-    bottom = leg_h / (side + leg_h) if legend else 0.0
-    fig.subplots_adjust(bottom=bottom, top=1.0, left=0.0, right=1.0)
-    if legend:
+    fig.subplots_adjust(bottom=leg_h / height, top=1 - t_h / height, left=0.0, right=1.0)
+    if not bare:
+        _title(ax, peptide)
         _add_legend(fig, 0.01, ncol=3)
     fig.savefig(out, dpi=dpi, facecolor="white")
     plt.close(fig)
@@ -268,8 +277,11 @@ def grid_shape(n: int) -> tuple[int, int]:
     return math.ceil(n / cols), cols
 
 
-def save_grid(peptides: list[str], out, legend=True, dpi=DPI):
-    """All wheels in a matrix, read left to right in input order."""
+def save_grid(peptides: list[str], out, bare=False, dpi=DPI):
+    """
+    All wheels in a matrix, read left to right in input order.
+    Default: each wheel has its sequence on top, legend at the bottom. bare: wheels only.
+    """
     n = len(peptides)
     rows, cols = grid_shape(n)
     parsed = [parse_sequence(p) for p in peptides]
@@ -278,18 +290,22 @@ def save_grid(peptides: list[str], out, legend=True, dpi=DPI):
 
     scale = max(1.0, cols / 3)                 # bigger legend for wider grids
     ncol = len(GROUPS) if cols >= 3 else (4 if cols == 2 else 3)
-    leg_h = (0.6 if ncol == len(GROUPS) else 0.9) * scale if legend else 0.0
+    t_h = 0.0 if bare else TITLE_H
+    leg_h = 0.0 if bare else (0.6 if ncol == len(GROUPS) else 0.9) * scale
+    gap = 0.05                                 # inches between panels
+    height = rows * (cell + t_h) + (rows - 1) * gap + leg_h
 
-    fig, axes = plt.subplots(rows, cols, figsize=(cell * cols, cell * rows + leg_h),
-                             squeeze=False)
+    fig, axes = plt.subplots(rows, cols, figsize=(cell * cols, height), squeeze=False)
     for k, ax in enumerate(axes.flat):
         if k < n:
             draw_wheel(ax, parsed[k], extent=extent)
+            if not bare:
+                _title(ax, peptides[k])
         else:
             ax.axis("off")
-    bottom = leg_h / (cell * rows + leg_h) if legend else 0.0
-    fig.subplots_adjust(bottom=bottom, top=0.995, left=0.005, right=0.995, hspace=0.04, wspace=0.04)
-    if legend:
+    fig.subplots_adjust(bottom=leg_h / height, top=1 - t_h / height, left=0.005, right=0.995,
+                        hspace=(t_h + gap) / cell, wspace=0.04)
+    if not bare:
         _add_legend(fig, 0.005, ncol=ncol, scale=scale)
     fig.savefig(out, dpi=dpi, facecolor="white")
     plt.close(fig)
@@ -311,18 +327,18 @@ def zip_bytes(peptides: list[str], selected: set) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         if "matrix" in selected:
-            z.writestr("matrix.png", png_bytes(save_grid, peptides, legend=True))
+            z.writestr("matrix.png", png_bytes(save_grid, peptides))
         if "matrix_bare" in selected:
-            z.writestr("matrix_bare.png", png_bytes(save_grid, peptides, legend=False))
-        for key, folder, leg in (("individuals", "individuals", True),
-                                 ("individuals_bare", "individuals_bare", False)):
+            z.writestr("matrix_bare.png", png_bytes(save_grid, peptides, bare=True))
+        for key, folder, bare in (("individuals", "individuals", False),
+                                  ("individuals_bare", "individuals_bare", True)):
             if key in selected:
                 for k, p in enumerate(peptides, 1):
                     z.writestr(f"{folder}/{k:02d}_{_safe(p)}.png",
-                               png_bytes(save_individual, p, legend=leg))
+                               png_bytes(save_individual, p, bare=bare))
         if "legend" in selected:
             z.writestr("legend.png", png_bytes(save_legend))
-        # matrix order, since the figures carry no sequence labels
+        # order of the panels (bare figures carry no sequence labels)
         z.writestr("peptides.txt", "".join(f"{k}\t{p}\n" for k, p in enumerate(peptides, 1)))
     return buf.getvalue()
 
