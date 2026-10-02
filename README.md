@@ -5,7 +5,7 @@ Helical wheel figures for peptides, ready for publication. Residues are colored 
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 ![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)
 
-**Launch the interactive app: [Helical Plotter on Streamlit](https://pepcolors.streamlit.app/)**
+**Launch the interactive app: [Helical Plotter on Streamlit](https://pepcolors.streamlit.app/](https://pepcolor-helical.streamlit.app/](https://pepcolor-helical.streamlit.app/)**
 
 **Authors:** Oleg V. Krokhin, Alexandre Préfontaine  
 **Affiliation:** Manitoba Centre for Proteomics and Systems Biology, University of Manitoba  
